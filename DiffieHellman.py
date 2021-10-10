@@ -2,6 +2,19 @@ import tkinter as tk
 from tkinter import *
 from tkinter import messagebox
 from tkinter.font import BOLD
+from Crypto.Util import number
+
+def primRoots(modulo):
+    coprime_set = {num for num in range(1, modulo) if gcd(num, modulo) == 1}
+
+    for g in range(1, modulo):
+        if coprime_set == {pow(g, powers, modulo) for powers in range(1, modulo)}:
+            return g
+    return -1
+def gcd(a,b):
+    while b != 0:
+        a, b = b, a % b
+    return a
 
 class DH_Endpoint(object):
     def __init__(self, g, p, private_key):
@@ -38,36 +51,51 @@ class DH_Endpoint(object):
         return decrypted_message
     
 def create_ui():
-    g = 197
-    p = 151
+    g = number.getPrime(16)
+    p = primRoots(g)
     alice_private_key = 199
     bob_private_key = 157
     message = ""
 
     Alice = DH_Endpoint(g, p, alice_private_key)
     Bob = DH_Endpoint(g, p, bob_private_key)
-
+    def generate_public_key():
+        g = number.getPrime(16)
+        p = primRoots(g)
+        g_input.delete(0, END)
+        g_input.insert(0, g)
+        p_input.delete(0, END)
+        p_input.insert(0, p)
     def get_shared_key_alice():
+        g = g_input.get()
+        p = p_input.get()
         private_key = private_alice_input.get()
         try:
+            g = int(g)
+            p = int(p)
             private_key = int(private_key)
         except ValueError:
             messagebox.showerror('Lỗi', 'Key phải là số nguyên')
             return
-        Alice = DH_Endpoint(g, p, private_key)
+        Alice.__init__(g, p, private_key)
         alice_shared_key = Alice.generate_shared_key()
         lbl_alice_shared_key_result.config(text=alice_shared_key)
         print("Alice share key: " , alice_shared_key)
         
         return
     def get_shared_key_bob():
+        g = g_input.get()
+        p = p_input.get()
         private_key = private_bob_input.get()
+
         try:
+            g = int(g)
+            p = int(p)
             private_key = int(private_key)
         except ValueError:
             messagebox.showerror('Lỗi', 'Key phải là số nguyên')
             return
-        Bob = DH_Endpoint(g, p, private_key)
+        Bob.__init__(g, p, private_key)
         bob_shared_key = Bob.generate_shared_key()
         lbl_bob_shared_key_result.config(text=bob_shared_key)
         print("Bob share key: " , bob_shared_key)
@@ -78,7 +106,12 @@ def create_ui():
         shared_key = Bob.generate_shared_key()
         full_key = Alice.generate_full_key(shared_key)
         print("Alice full key: " , full_key)
-        result = Alice.decrypt_message(text)
+        try:
+            result = Alice.decrypt_message(text)
+        except ValueError:
+            lbl_message_alice.config(text='')
+            messagebox.showerror('Lỗi', 'Không thể giải mã')
+            return
         lbl_message_alice.config(text=result)
         return
     def decrypt_bob_message():
@@ -87,7 +120,13 @@ def create_ui():
         shared_key = Alice.generate_shared_key()
         full_key = Bob.generate_full_key(shared_key)
         print("Bob full key: " , full_key)
-        result = Bob.decrypt_message(text)
+        try:
+            result = Bob.decrypt_message(text)
+        except ValueError:
+            lbl_message_bob.config(text='')
+            messagebox.showerror('Lỗi', 'Không thể giải mã')
+            return
+        
         lbl_message_bob.config(text=result)
         return
     def send_alice_btn_press():
@@ -122,14 +161,19 @@ def create_ui():
     title.pack()
 
     row = Frame(window)
-    lbg = "g = {}".format(g)
-    lbl_g = Label(row, text=lbg, width = 10, font=("Courier", 18))
-    lbp = "p = {}".format(p)
-    lbl_p = Label(row, text=lbp, width = 10, font=("Courier", 18))
-
+    lbl_g = Label(row, text="g =", width = 5, font=("Courier", 18))
+    g_input = Entry(row, width=5,fg="black", justify=CENTER)
+    g_input.insert(0, g)
+    lbl_p = Label(row, text="p =", width = 5, font=("Courier", 18))
+    p_input = Entry(row, width=5,fg="black", justify=CENTER)
+    p_input.insert(0,p)
+    random_btn = Button(row, text="Generate", command=generate_public_key, width = 9, height = 1)
     row.pack(side = TOP, padx = 5 , pady = 5)
     lbl_g.pack(side = LEFT)
+    g_input.pack(side =LEFT)
     lbl_p.pack(side = LEFT)
+    p_input.pack(side = LEFT)
+    random_btn.pack(side=RIGHT)
 
     row_index = Frame(window)
     row_index.pack()
