@@ -3,18 +3,32 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter.font import BOLD
 from Crypto.Util import number
+import random
+from functools import wraps
+def cache_gcd(f):
+    cache = {}
 
-def primRoots(modulo):
-    coprime_set = {num for num in range(1, modulo) if gcd(num, modulo) == 1}
+    @wraps(f)
+    def wrapped(a, b):
+        key = (a, b)
+        try:
+            result = cache[key]
+        except KeyError:
+            result = cache[key] = f(a, b)
+        return result
+    return wrapped
 
-    for g in range(1, modulo):
-        if coprime_set == {pow(g, powers, modulo) for powers in range(1, modulo)}:
-            return g
-    return -1
+@cache_gcd
 def gcd(a,b):
     while b != 0:
         a, b = b, a % b
     return a
+
+def primRoots(modulo):
+    coprime_set = {num for num in range(1, modulo) if gcd(num, modulo) == 1}
+    return [g for g in range(1, modulo) if coprime_set == {pow(g, powers, modulo)
+            for powers in range(1, modulo)}]
+
 
 class DH_Endpoint(object):
     def __init__(self, g, p, private_key):
@@ -51,17 +65,18 @@ class DH_Endpoint(object):
         return decrypted_message
     
 def create_ui():
-    g = number.getPrime(16)
-    p = primRoots(g)
+    g = number.getPrime(10)
+    prim_roots = primRoots(g)
+    p = random.choice(prim_roots)
     alice_private_key = 199
     bob_private_key = 157
-    message = ""
 
     Alice = DH_Endpoint(g, p, alice_private_key)
     Bob = DH_Endpoint(g, p, bob_private_key)
     def generate_public_key():
-        g = number.getPrime(16)
-        p = primRoots(g)
+        g = number.getPrime(10)
+        prim_roots = primRoots(g)
+        p = random.choice(prim_roots)
         g_input.delete(0, END)
         g_input.insert(0, g)
         p_input.delete(0, END)
