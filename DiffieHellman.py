@@ -65,18 +65,18 @@ class DH_Endpoint(object):
         return decrypted_message
     
 def create_ui():
-    g = number.getPrime(10)
-    prim_roots = primRoots(g)
-    p = random.choice(prim_roots)
+    p = number.getPrime(10)
+    prim_roots = primRoots(p)
+    g = random.choice(prim_roots)
     alice_private_key = 199
     bob_private_key = 157
 
     Alice = DH_Endpoint(g, p, alice_private_key)
     Bob = DH_Endpoint(g, p, bob_private_key)
     def generate_public_key():
-        g = number.getPrime(10)
-        prim_roots = primRoots(g)
-        p = random.choice(prim_roots)
+        p = number.getPrime(10)
+        prim_roots = primRoots(p)
+        g = random.choice(prim_roots)
         g_input.delete(0, END)
         g_input.insert(0, g)
         p_input.delete(0, END)
@@ -184,10 +184,11 @@ def create_ui():
     p_input.insert(0,p)
     random_btn = Button(row, text="Generate", command=generate_public_key, width = 9, height = 1)
     row.pack(side = TOP, padx = 5 , pady = 5)
-    lbl_g.pack(side = LEFT)
-    g_input.pack(side =LEFT)
     lbl_p.pack(side = LEFT)
     p_input.pack(side = LEFT)
+    lbl_g.pack(side = LEFT)
+    g_input.pack(side =LEFT)
+    
     random_btn.pack(side=RIGHT)
 
     row_index = Frame(window)
